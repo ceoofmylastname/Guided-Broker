@@ -258,23 +258,19 @@ function ConciergeInner({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-50 border border-[#067EB3]/30 rounded-3xl p-8 shadow-sm mb-12 relative overflow-hidden"
+              className="bg-white border border-slate-200 rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] mb-12 relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-[#067EB3]/5 pointer-events-none" />
-
               <div className="flex flex-col items-center">
-                {/* ProtectHealth Pete avatar */}
-                <div className="relative mb-4 flex items-center justify-center">
-                  {/* soft brand glow that intensifies while Pete speaks */}
-                  <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 h-52 rounded-full blur-3xl transition-all duration-500 ${isSpeaking ? 'bg-[#067EB3]/45 scale-110' : 'bg-[#067EB3]/15 scale-100'}`} />
-                  {/* pulsing halo ring while speaking */}
+                {/* ProtectHealth Pete avatar — transparent, fades into the white card */}
+                <div className="relative mb-1 flex items-end justify-center">
+                  {/* subtle pulsing halo ring while speaking */}
                   {isSpeaking && (
-                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full border-2 border-[#067EB3]/40 animate-ping" />
+                    <span className="absolute top-8 left-1/2 -translate-x-1/2 w-36 h-36 rounded-full border-2 border-[#067EB3]/25 animate-ping" />
                   )}
                   <img
                     src="/pete.png"
                     alt="ProtectHealth Pete, your AI concierge"
-                    className="relative w-44 sm:w-48 object-contain drop-shadow-[0_12px_30px_rgba(6,126,179,0.25)] select-none pointer-events-none"
+                    className="relative w-48 sm:w-56 object-contain select-none pointer-events-none"
                     draggable={false}
                   />
                 </div>
