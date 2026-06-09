@@ -6,12 +6,14 @@
 // Centralized configurations for easy adjustments and backend wiring.
 
 export const CONFIG = {
-  // Replace this with your actual ElevenLabs conversational agent ID
-  elevenLabsAgentId: "YOUR_ELEVENLABS_AGENT_ID", 
-  
-  // API Configurations
-  apiBaseUrl: "", // e.g. "https://api.yourdomain.com"
-  
-  // Toggle this to false to send real network POST requests to "/api/search"
+  // ElevenLabs Agent ID — voice widget loads automatically once this is real.
+  elevenLabsAgentId: "kl9lfoKsBZWGlVQLOoJy",
+
+  // Deployed Cloudflare Pages domain. Leave "" to call same-origin "/api/search".
+  // e.g. "https://guided-broker.pages.dev"
+  apiBaseUrl: "",
+
+  // true  = local mock search (no backend needed, good for demos)
+  // false = real POST to `${apiBaseUrl}/api/search` (Pinecone RAG). Flip once deployed.
   useMockSearch: true,
 };
