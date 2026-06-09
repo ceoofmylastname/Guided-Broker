@@ -1,0 +1,6 @@
+{
+  "name": "GuidedBroker",
+  "description": "Premium Broker Resource Center and AI Concierge for ProtectHealth (a company of B&C Agency LLC).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
