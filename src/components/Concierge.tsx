@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Mic, Send, Volume2, Sparkles, Folder, ArrowRight, CornerDownRight, ExternalLink, Loader2, PhoneOff } from 'lucide-react';
+import { Search, Mic, Send, Sparkles, Folder, ArrowRight, CornerDownRight, ExternalLink, Loader2, PhoneOff } from 'lucide-react';
 import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { CONFIG } from '../config';
 import { searchResources } from '../lib/search';
@@ -263,8 +263,20 @@ function ConciergeInner({
               <div className="absolute inset-0 bg-[#067EB3]/5 pointer-events-none" />
 
               <div className="flex flex-col items-center">
-                <div className={`p-4 rounded-full shadow-sm mb-4 ${isSpeaking ? 'bg-[#067EB3]/15 text-[#067EB3] animate-pulse' : 'bg-rose-100 text-rose-600'}`}>
-                  <Volume2 size={32} />
+                {/* ProtectHealth Pete avatar */}
+                <div className="relative mb-4 flex items-center justify-center">
+                  {/* soft brand glow that intensifies while Pete speaks */}
+                  <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 h-52 rounded-full blur-3xl transition-all duration-500 ${isSpeaking ? 'bg-[#067EB3]/45 scale-110' : 'bg-[#067EB3]/15 scale-100'}`} />
+                  {/* pulsing halo ring while speaking */}
+                  {isSpeaking && (
+                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full border-2 border-[#067EB3]/40 animate-ping" />
+                  )}
+                  <img
+                    src="/pete.png"
+                    alt="ProtectHealth Pete, your AI concierge"
+                    className="relative w-44 sm:w-48 object-contain drop-shadow-[0_12px_30px_rgba(6,126,179,0.25)] select-none pointer-events-none"
+                    draggable={false}
+                  />
                 </div>
 
                 <h4 className="font-display font-bold text-slate-900 text-lg uppercase tracking-widest font-mono">
