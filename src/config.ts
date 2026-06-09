@@ -14,6 +14,6 @@ export const CONFIG = {
   apiBaseUrl: "",
 
   // true  = local mock search (no backend needed, good for demos)
-  // false = real POST to `${apiBaseUrl}/api/search` (Pinecone RAG). Flip once deployed.
-  useMockSearch: true,
+  // false = real POST to `${apiBaseUrl}/api/search` (Pinecone RAG). Now LIVE.
+  useMockSearch: false,
 };
