@@ -41,10 +41,40 @@ const AGENT_READY = !!CONFIG.elevenLabsAgentId && CONFIG.elevenLabsAgentId !== "
 // Wrap the concierge in the ElevenLabs ConversationProvider so the hero
 // "Tap to Speak" button can drive a real voice session.
 export default function Concierge(props: ConciergeProps) {
+  const { onSearchExecuted, setQuery, setIsSearching } = props;
+
+  // Client tool the ElevenLabs voice agent calls. It runs the real search in
+  // the browser, renders the result card with the clickable link on screen,
+  // and returns the answer text for Pete to speak.
+  const clientTools = {
+    search_portal: async (params: any) => {
+      const q = String(params?.query || "").trim();
+      if (!q) return "No query was provided.";
+      setQuery(q);
+      setIsSearching(true);
+      try {
+        const res = await searchResources(q, Number(params?.top_k) || 5);
+        onSearchExecuted(res, q);
+        const t = res.top_link;
+        return JSON.stringify({
+          answer: res.answer,
+          resource: t ? t.title : null,
+          directions: t ? t.directions : null,
+          link_shown_on_screen: !!t,
+        });
+      } catch (e) {
+        return "The search failed, please try again.";
+      } finally {
+        setIsSearching(false);
+      }
+    },
+  };
+
   return (
     <ConversationProvider
       agentId={AGENT_READY ? CONFIG.elevenLabsAgentId : undefined}
       connectionType="webrtc"
+      clientTools={clientTools}
       onError={(e) => console.error("ElevenLabs conversation error:", e)}
     >
       <ConciergeInner {...props} />
