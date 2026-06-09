@@ -5,10 +5,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Mic, MicOff, Send, MessageSquare, Volume2, Sparkles, Folder, ArrowRight, CornerDownRight, ExternalLink, HelpCircle, Loader2 } from 'lucide-react';
+import { Search, Mic, Send, Volume2, Sparkles, Folder, ArrowRight, CornerDownRight, ExternalLink, Loader2, PhoneOff } from 'lucide-react';
+import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { CONFIG } from '../config';
 import { searchResources } from '../lib/search';
-import { SearchResponse, ResourceCategory } from '../types';
+import { SearchResponse } from '../types';
 
 interface ConciergeProps {
   onSearchExecuted: (result: SearchResponse, queryText: string) => void;
@@ -35,41 +36,37 @@ const SUGGESTIONS = [
   { text: "Meeting Reservations", label: "📅 Room Bookings" }
 ];
 
-export default function Concierge({ 
-  onSearchExecuted, 
-  result, 
-  query, 
-  setQuery, 
-  isSearching, 
-  setIsSearching 
+const AGENT_READY = !!CONFIG.elevenLabsAgentId && CONFIG.elevenLabsAgentId !== "YOUR_ELEVENLABS_AGENT_ID";
+
+// Wrap the concierge in the ElevenLabs ConversationProvider so the hero
+// "Tap to Speak" button can drive a real voice session.
+export default function Concierge(props: ConciergeProps) {
+  return (
+    <ConversationProvider
+      agentId={AGENT_READY ? CONFIG.elevenLabsAgentId : undefined}
+      connectionType="webrtc"
+      onError={(e) => console.error("ElevenLabs conversation error:", e)}
+    >
+      <ConciergeInner {...props} />
+    </ConversationProvider>
+  );
+}
+
+function ConciergeInner({
+  onSearchExecuted,
+  result,
+  query,
+  setQuery,
+  isSearching,
+  setIsSearching
 }: ConciergeProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceQuery, setVoiceQuery] = useState('');
-  const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
-  const [isElevenLabsLoaded, setIsElevenLabsLoaded] = useState(false);
-  
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Load ElevenLabs Web Component SDK script
-  useEffect(() => {
-    if (CONFIG.elevenLabsAgentId && CONFIG.elevenLabsAgentId !== "YOUR_ELEVENLABS_AGENT_ID") {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-      script.async = true;
-      script.type = 'text/javascript';
-      script.onload = () => setIsElevenLabsLoaded(true);
-      document.body.appendChild(script);
-
-      return () => {
-        try {
-          document.body.removeChild(script);
-        } catch (e) {
-          // script might be already detached
-        }
-      };
-    }
-  }, []);
+  // Real ElevenLabs voice session state
+  const { startSession, endSession, status, isSpeaking } = useConversation();
+  const isConnected = status === 'connected';
+  const isConnecting = status === 'connecting';
 
   // Cycle through placeholders for text box
   useEffect(() => {
@@ -79,121 +76,75 @@ export default function Concierge({
     return () => clearInterval(interval);
   }, []);
 
-  // Submit Search Query
+  // Submit text search query
   const handleSearchSubmit = async (e?: React.FormEvent, customQuery?: string) => {
     if (e) e.preventDefault();
     const queryToSend = customQuery !== undefined ? customQuery : query;
     if (!queryToSend.trim()) return;
 
     setIsSearching(true);
-    // Mimic API latency for premium realistic feel
-    setTimeout(async () => {
-      try {
-        const searchRes = await searchResources(queryToSend);
-        onSearchExecuted(searchRes, queryToSend);
-      } catch (err) {
-        console.error("Search failure: ", err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 600);
+    try {
+      const searchRes = await searchResources(queryToSend);
+      onSearchExecuted(searchRes, queryToSend);
+    } catch (err) {
+      console.error("Search failure: ", err);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  // Click on quick suggestion chip
   const handleChipClick = (text: string) => {
     setQuery(text);
     handleSearchSubmit(undefined, text);
   };
 
-  // Simulate premium interactive voice recognition flow
-  const triggerMockVoiceListening = () => {
-    if (isListening) return;
-    setIsListening(true);
-    setShowVoiceOverlay(true);
-    setVoiceQuery('Listening for your question...');
-
-    const simulatedQueries = [
-      "Where can I find 2026 commissions?",
-      "Launch Ambetter broker portal",
-      "Get appointed with Clearwater PPO benefits",
-      "I need official brand assets and logo guides"
-    ];
-    // Select random query
-    const targetQuery = simulatedQueries[Math.floor(Math.random() * simulatedQueries.length)];
-
-    // Timeline for simulated voice experience
-    // 1. Listen for 1.8s
-    setTimeout(() => {
-      setVoiceQuery(`Transcribing: "${targetQuery}"`);
-    }, 1800);
-
-    // 2. Transcribe and input character-by-character
-    setTimeout(() => {
-      setShowVoiceOverlay(false);
-      setIsListening(false);
-      
-      // Type effect sequence
-      let currentIdx = 0;
-      setQuery('');
-      const typingTimer = setInterval(() => {
-        if (currentIdx < targetQuery.length) {
-          setQuery(targetQuery.substring(0, currentIdx + 1));
-          currentIdx++;
-        } else {
-          clearInterval(typingTimer);
-          // Trigger search after typing concludes
-          handleSearchSubmit(undefined, targetQuery);
-        }
-      }, 35);
-    }, 3200);
+  // Start / stop the real voice conversation with Pete.
+  const handleVoiceToggle = async () => {
+    if (!AGENT_READY) return;
+    if (isConnected || isConnecting) {
+      endSession();
+      return;
+    }
+    try {
+      // Ask for the mic up front so the browser prompt is tied to this click.
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      startSession({ agentId: CONFIG.elevenLabsAgentId, connectionType: 'webrtc' });
+    } catch (err) {
+      console.error("Could not start voice session:", err);
+      alert("I couldn't access your microphone. Please allow mic access and try again.");
+    }
   };
 
-  // Map category code to human readable and styles
+  const voiceLabel = isConnecting
+    ? 'Connecting…'
+    : isConnected
+      ? (isSpeaking ? 'Pete is speaking' : 'Listening — tap to end')
+      : 'Tap to Speak';
+
+  // Map category code to human readable label + badge styles
   const getCategoryDetails = (cat: string) => {
-    switch (cat) {
-      case 'administrative':
-        return { 
-          badge: 'bg-violet-50 text-violet-700 border-violet-200', 
-          label: 'Administrative' 
-        };
-      case 'support_training':
-        return { 
-          badge: 'bg-[#067EB3]/10 text-[#067EB3] border-[#067EB3]/20', 
-          label: 'Support & Training' 
-        };
-      case 'directory':
-        return { 
-          badge: 'bg-teal-50 text-teal-700 border-teal-200', 
-          label: 'Directory' 
-        };
-      case 'important_links':
-        return { 
-          badge: 'bg-amber-50 text-amber-700 border-amber-200', 
-          label: 'Carrier Portal Connection' 
-        };
-      default:
-        return { 
-          badge: 'bg-slate-50 text-slate-700 border-slate-200', 
-          label: 'Document' 
-        };
-    }
+    if (cat?.startsWith('administrative')) return { badge: 'bg-violet-50 text-violet-700 border-violet-200', label: 'Administrative' };
+    if (cat?.startsWith('support')) return { badge: 'bg-[#067EB3]/10 text-[#067EB3] border-[#067EB3]/20', label: 'Support & Training' };
+    if (cat?.startsWith('directory')) return { badge: 'bg-teal-50 text-teal-700 border-teal-200', label: 'Directory' };
+    if (cat?.startsWith('carrier') || cat === 'important_links') return { badge: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Carrier Portal' };
+    return { badge: 'bg-slate-50 text-slate-700 border-slate-200', label: 'Resource' };
   };
 
   return (
     <section id="concierge-section" className="relative py-20 md:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      
+
       {/* Decorative gradient glowing canvas backgrounds */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-[#067EB3]/10 via-[#6D6F6E]/5 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
       <div className="absolute top-0 right-10 w-96 h-96 bg-[#067EB3]/5 rounded-full blur-3xl -z-10 pointer-events-none animate-pulse duration-10000" />
-      
+
       <div className="max-w-4xl mx-auto text-center">
-        
+
         {/* Title Block */}
         <div className="mb-10 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 mb-4 shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)]">
             <Sparkles size={13} className="text-[#067EB3]" />
             <span className="text-[11px] font-semibold text-slate-600 tracking-wider uppercase font-mono">
-              AI Voice & Text Assistant
+              AI Voice &amp; Text Assistant
             </span>
           </div>
 
@@ -208,19 +159,19 @@ export default function Concierge({
 
         {/* CONCIERGE GLASS CARD */}
         <div className="bg-white border border-slate-200/90 rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.05)] relative overflow-hidden mb-12">
-          
+
           {/* Subtle neon border outline flare */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#067EB3]/5 via-[#6D6F6E]/5 to-[#067EB3]/5 -z-10 pointer-events-none" />
 
           {/* Form / Controller */}
           <form onSubmit={(e) => handleSearchSubmit(e)} className="relative flex flex-col md:flex-row gap-4 items-center">
-            
+
             {/* Input wrap */}
             <div className="relative w-full flex-1">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                 <Search size={18} />
               </div>
-              
+
               <input
                 ref={searchInputRef}
                 type="text"
@@ -244,27 +195,32 @@ export default function Concierge({
               </div>
             </div>
 
-            {/* Microphone Trigger Button */}
+            {/* Voice Trigger Button — drives the real ElevenLabs agent */}
             <div className="flex gap-4 w-full md:w-auto shrink-0">
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={triggerMockVoiceListening}
-                disabled={isListening}
+                onClick={handleVoiceToggle}
+                disabled={!AGENT_READY}
                 className={`flex-1 md:flex-initial py-3.5 px-6 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all cursor-pointer border ${
-                  isListening
-                    ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-[0_0_20px_rgba(239,68,68,0.15)] animate-pulse'
+                  isConnected
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
                     : 'bg-gradient-to-r from-[#067EB3] to-[#6D6F6E] text-white border-[#067EB3]/10 shadow-md shadow-[#067EB3]/15'
-                }`}
+                } ${!AGENT_READY ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isListening ? (
+                {isConnecting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Connecting…</span>
+                  </>
+                ) : isConnected ? (
                   <>
                     <div className="relative flex items-center justify-center w-5 h-5">
-                      <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-rose-400 opacity-75" />
+                      <span className={`absolute inline-flex h-3 w-3 rounded-full bg-rose-400 opacity-75 ${isSpeaking ? 'animate-ping' : 'animate-pulse'}`} />
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
                     </div>
-                    <span>Listening...</span>
+                    <span>{voiceLabel}</span>
                   </>
                 ) : (
                   <>
@@ -293,65 +249,50 @@ export default function Concierge({
               </button>
             ))}
           </div>
-
         </div>
 
-        {/* ElevenLabs Widget Embed Integration Banner */}
-        {CONFIG.elevenLabsAgentId !== "YOUR_ELEVENLABS_AGENT_ID" && isElevenLabsLoaded ? (
-          <div className="mb-8 p-4 bg-gradient-to-r from-[#067EB3]/10 via-slate-50 to-[#6D6F6E]/5 rounded-2xl border border-slate-200 text-left flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#067EB3]/10 rounded-lg text-[#067EB3]">
-                <Volume2 size={20} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">ElevenLabs Conversational Voice Enabled</h4>
-                <p className="text-xs text-slate-600 mt-0.5">Real-time full duplex natural-language telephony is loaded. Tap the floating sphere to talk directly.</p>
-              </div>
-            </div>
-            {/* Widget mount spot */}
-            <div className="shrink-0 relative">
-              <elevenlabs-convai agent-id={CONFIG.elevenLabsAgentId}></elevenlabs-convai>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-4 text-xs text-slate-500 italic mt-0.5 max-w-lg mx-auto leading-relaxed">
-            Note: Speak features are locally simulated for broker sandbox demo. To wire real duplex voice, add your <span className="font-mono text-slate-600 font-semibold bg-slate-100 px-1 py-0.5 rounded">elevenLabsAgentId</span> in <span className="font-mono text-slate-500">config.ts</span>.
-          </div>
-        )}
-
-        {/* VOICE INPUT SIMULATION TRANSCRIBING OVERLAY SECTION */}
+        {/* LIVE VOICE CALL OVERLAY — shown while a real conversation is active */}
         <AnimatePresence>
-          {showVoiceOverlay && (
+          {isConnected && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-50 border border-rose-200 rounded-3xl p-8 shadow-sm mb-12 relative overflow-hidden"
+              className="bg-slate-50 border border-[#067EB3]/30 rounded-3xl p-8 shadow-sm mb-12 relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-rose-50/20 pointer-events-none" />
-              
+              <div className="absolute inset-0 bg-[#067EB3]/5 pointer-events-none" />
+
               <div className="flex flex-col items-center">
-                <div className="p-4 bg-rose-100 text-rose-600 rounded-full animate-pulse shadow-sm mb-4">
+                <div className={`p-4 rounded-full shadow-sm mb-4 ${isSpeaking ? 'bg-[#067EB3]/15 text-[#067EB3] animate-pulse' : 'bg-rose-100 text-rose-600'}`}>
                   <Volume2 size={32} />
                 </div>
-                
-                <h4 className="font-display font-bold text-slate-900 text-lg tracking-wide uppercase tracking-widest font-mono">GuidedBroker Audio Feed Active</h4>
-                
-                {/* Simulated Waveform Visualization */}
+
+                <h4 className="font-display font-bold text-slate-900 text-lg uppercase tracking-widest font-mono">
+                  {isSpeaking ? 'Pete is speaking' : 'Listening…'}
+                </h4>
+
+                {/* Live waveform */}
                 <div className="flex items-end justify-center gap-1.5 h-12 my-6">
                   {[24, 40, 16, 48, 32, 56, 20, 44, 32, 24, 40, 16, 52, 28, 48, 12, 36, 24].map((h, i) => (
-                    <span 
-                       key={i} 
-                       style={{ height: `${h}px` }} 
-                       className={`w-1 bg-[#067EB3] rounded-full animate-wave`} 
+                    <span
+                       key={i}
+                       style={{ height: `${h}px` }}
+                       className={`w-1 rounded-full ${isSpeaking ? 'bg-[#067EB3] animate-wave' : 'bg-slate-300'}`}
                     />
                   ))}
                 </div>
 
-                <p className="text-slate-700 font-mono text-sm sm:italic max-w-md mx-auto line-clamp-2">
-                  {voiceQuery}
+                <p className="text-slate-600 font-mono text-sm max-w-md mx-auto">
+                  Ask out loud — "Where are my 2026 commissions?"
                 </p>
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono mt-3">Speak now... "Where are my commissions?"</span>
+
+                <button
+                  onClick={() => endSession()}
+                  className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500 text-white text-xs font-bold shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                >
+                  <PhoneOff size={14} />
+                  End conversation
+                </button>
               </div>
             </motion.div>
           )}
@@ -385,9 +326,9 @@ export default function Concierge({
             >
               {/* Decorative side accent lines */}
               <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-[#067EB3] to-[#6D6F6E]" />
-              
+
               <div className="flex flex-col gap-6">
-                
+
                 {/* Header row containing title and badges */}
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-center gap-2.5">
@@ -421,7 +362,7 @@ export default function Concierge({
                 {/* Top link launch portal button */}
                 {result.top_link && (
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-2">
-                    
+
                     {/* Visual breadcrumb instruction directions details */}
                     <div className="flex items-start gap-1 text-xs text-slate-500 max-w-md">
                       <CornerDownRight size={14} className="text-[#067EB3] shrink-0 mt-0.5" />
@@ -439,22 +380,22 @@ export default function Concierge({
                       whileTap={{ scale: 0.95 }}
                       className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#067EB3] to-[#6D6F6E] text-white font-bold text-xs shadow-md hover:brightness-110 flex items-center justify-center gap-2 cursor-pointer shrink-0"
                     >
-                      <span>{result.top_link.category === 'important_links' ? 'Launch Carrier Portal' : 'Open Resource Document'}</span>
+                      <span>{getCategoryDetails(result.top_link.category).label === 'Carrier Portal' ? 'Launch Carrier Portal' : 'Open Resource Document'}</span>
                       <ExternalLink size={13} />
                     </motion.a>
                   </div>
                 )}
 
-                {/* Secondary results section (Score based index matching) */}
+                {/* Secondary results section */}
                 {result.matches && result.matches.length > 1 && (
                   <div className="border-t border-slate-200 pt-5 mt-2">
                     <h4 className="text-xs font-bold uppercase tracking-widest text-[#067EB3] mb-3.5 font-mono">
                       More relevant links found ({result.matches.length - 1}):
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {result.matches.slice(1).map((match) => (
+                      {result.matches.slice(1).map((match, i) => (
                         <a
-                          key={match.id}
+                          key={(match as any).id ?? i}
                           href={match.url}
                           target="_blank"
                           rel="noopener noreferrer"
