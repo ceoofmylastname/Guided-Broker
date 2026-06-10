@@ -208,28 +208,50 @@ function ConciergeInner({
       <div className="max-w-4xl mx-auto text-center">
 
         {/* Title Block */}
-        <div className="mb-10 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 mb-4 shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)]">
+        <div className="mb-10">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur border border-slate-200/80 mb-6 shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)]"
+          >
             <Sparkles size={13} className="text-[#067EB3]" />
             <span className="text-[11px] font-semibold text-slate-600 tracking-wider uppercase font-mono">
               AI Voice &amp; Text Assistant
             </span>
-          </div>
+          </motion.div>
 
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-tight">
-            Ask the GuidedBroker <span className="bg-gradient-to-r from-[#067EB3] to-[#6D6F6E] bg-clip-text text-transparent">Concierge</span>
-          </h1>
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.7, filter: "blur(8px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{ type: "spring", stiffness: 70, damping: 14, delay: 0.15 }}
+            className="font-display text-5xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.04]"
+          >
+            Ask the GuidedBroker{" "}
+            <span className="gradient-concierge">Concierge</span>
+          </motion.h1>
 
-          <p className="text-slate-600 mt-4 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+          <motion.p
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 220, damping: 18, delay: 0.7 }}
+            className="text-slate-600 mt-5 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed"
+          >
             Find any carrier portal login page, direct deposit statement, eligibility guide, or training asset details by voice or text. Instantly.
-          </p>
+          </motion.p>
         </div>
 
         {/* CONCIERGE GLASS CARD */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-[0_16px_40px_rgba(0,0,0,0.05)] relative overflow-hidden mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 28, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 120, damping: 18, delay: 0.85 }}
+          className="bg-white/95 backdrop-blur-xl border border-white/60 ring-1 ring-slate-200/70 rounded-3xl p-6 md:p-8 shadow-[0_30px_70px_-20px_rgba(6,126,179,0.30)] relative overflow-hidden mb-12"
+        >
 
-          {/* Subtle neon border outline flare */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#067EB3]/5 via-[#6D6F6E]/5 to-[#067EB3]/5 -z-10 pointer-events-none" />
+          {/* Animated gradient border sheen */}
+          <div className="absolute -inset-px rounded-3xl bg-gradient-to-r from-[#067EB3]/20 via-transparent to-[#7c3aed]/20 opacity-60 pointer-events-none -z-10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-[#067EB3]/[0.03] -z-10 pointer-events-none" />
 
           {/* Form / Controller */}
           <form onSubmit={(e) => handleSearchSubmit(e)} className="relative flex flex-col md:flex-row gap-4 items-center">
@@ -264,37 +286,46 @@ function ConciergeInner({
             </div>
 
             {/* Voice Trigger Button — drives the real ElevenLabs agent */}
-            <div className="flex gap-4 w-full md:w-auto shrink-0">
+            <div className="relative flex gap-4 w-full md:w-auto shrink-0">
+              {/* Pulsing spotlight glow behind the mic (idle only) */}
+              {!isConnected && !isConnecting && (
+                <div
+                  aria-hidden
+                  className="absolute -inset-5 rounded-[2rem] bg-[radial-gradient(circle_at_center,rgba(6,126,179,0.6),rgba(124,58,237,0.25)_45%,transparent_70%)] blur-2xl animate-spotlight pointer-events-none -z-0"
+                />
+              )}
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.97, y: 2 }}
                 onClick={handleVoiceToggle}
                 disabled={!AGENT_READY}
-                className={`flex-1 md:flex-initial py-3.5 px-6 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all cursor-pointer border ${
+                className={`relative z-10 flex-1 md:flex-initial py-4 px-7 rounded-2xl text-sm font-bold tracking-wide flex items-center justify-center gap-2.5 cursor-pointer border transition-[box-shadow,transform] ${
                   isConnected
-                    ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
-                    : 'bg-gradient-to-r from-[#067EB3] to-[#6D6F6E] text-white border-[#067EB3]/10 shadow-md shadow-[#067EB3]/15'
+                    ? 'bg-rose-500 text-white border-rose-400/40 shadow-[0_6px_0_#9f1239,0_16px_30px_rgba(239,68,68,0.35)]'
+                    : 'text-white border-white/25 bg-gradient-to-b from-[#0a9fd6] to-[#056a96] shadow-[0_7px_0_#044f73,0_18px_34px_rgba(6,126,179,0.45)] hover:shadow-[0_9px_0_#044f73,0_24px_44px_rgba(6,126,179,0.55)] active:shadow-[0_2px_0_#044f73,0_8px_16px_rgba(6,126,179,0.4)]'
                 } ${!AGENT_READY ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
+                {/* glossy top highlight for the 3D feel */}
+                <span aria-hidden className="absolute inset-x-2 top-1 h-1/3 rounded-full bg-white/25 blur-[2px] pointer-events-none" />
                 {isConnecting ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={17} className="animate-spin" />
                     <span>Connecting…</span>
                   </>
                 ) : isConnected ? (
                   <>
                     <div className="relative flex items-center justify-center w-5 h-5">
-                      <span className={`absolute inline-flex h-3 w-3 rounded-full bg-rose-400 opacity-75 ${isSpeaking ? 'animate-ping' : 'animate-pulse'}`} />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                      <span className={`absolute inline-flex h-3 w-3 rounded-full bg-white/70 opacity-75 ${isSpeaking ? 'animate-ping' : 'animate-pulse'}`} />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
                     </div>
                     <span>{voiceLabel}</span>
                   </>
                 ) : (
                   <>
                     <div className="relative">
-                      <Mic size={16} />
-                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+                      <Mic size={17} />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-teal-300 animate-ping" />
                     </div>
                     <span>Tap to Speak</span>
                   </>
@@ -317,7 +348,7 @@ function ConciergeInner({
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* LIVE VOICE CALL OVERLAY — shown while a real conversation is active */}
         <AnimatePresence>

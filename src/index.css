@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
+  --font-display: "Sora", "Space Grotesk", sans-serif;
   --color-primary: #067EB3;
   --color-brand-gray: #6D6F6E;
 }
@@ -58,4 +58,49 @@ html {
 .animate-wave:nth-child(5n) { animation-delay: 0.6s; }
 .animate-wave:nth-child(6n) { animation-delay: 0.05s; }
 .animate-wave:nth-child(7n) { animation-delay: 0.2s; }
+
+/* Living animated gradient for the "Concierge" word */
+@keyframes gradientPan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.gradient-concierge {
+  background-image: linear-gradient(90deg, #067EB3, #22d3ee, #7c3aed, #2563eb, #067EB3);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: gradientPan 6s linear infinite;
+}
+
+/* Pulsing spotlight behind the mic button */
+@keyframes spotlightPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.14); }
+}
+.animate-spotlight {
+  animation: spotlightPulse 3.2s ease-in-out infinite;
+}
+
+/* Soft conic shimmer ring */
+@keyframes spinSlow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-concierge,
+  .animate-spotlight,
+  .animate-spin-slow,
+  .animate-drift-slow,
+  .animate-drift-medium,
+  .animate-wave {
+    animation: none !important;
+  }
+}
 

@@ -86,15 +86,25 @@ export default function ResourceGrid({ resources }: ResourceGridProps) {
       <div className="max-w-7xl mx-auto">
         
         {/* Section Title */}
-        <div className="text-center mb-16">
-          <h2 className="font-display text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Manual Resource Bookshelf
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur border border-slate-200/80 mb-5">
+            <Layers size={13} className="text-[#067EB3]" />
+            <span className="text-[11px] font-semibold text-slate-600 tracking-wider uppercase font-mono">Browse Manually</span>
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight">
+            <span className="text-slate-900">The </span><span className="gradient-concierge">Resource Library</span>
           </h2>
-          <p className="text-slate-600 mt-3 text-sm md:text-base max-w-xl mx-auto">
-            Browse through directories, compliance manuals, commission deposits, and external logins organized cleanly.
+          <p className="text-slate-600 mt-4 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+            Every directory, compliance manual, commission table, and carrier login — organized and one tap away.
           </p>
-          <div className="w-16 h-1 bg-gradient-to-r from-[#067EB3] to-[#6D6F6E] mx-auto mt-6 rounded-full" />
-        </div>
+          <div className="w-20 h-1 bg-gradient-to-r from-[#067EB3] via-[#22d3ee] to-[#7c3aed] mx-auto mt-6 rounded-full" />
+        </motion.div>
 
         {/* Categories Grid - 1 col on mobile, 2 cols on tablet, 4 cols on desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -141,10 +151,10 @@ export default function ResourceGrid({ resources }: ResourceGridProps) {
                         damping: 15,
                         delay: (colIndex * 0.1) + (itemIndex * 0.05) 
                       }}
-                      className={`group relative p-4 rounded-xl border text-left cursor-pointer transition-all ${
-                        isImportantLinks 
-                          ? 'bg-amber-50/40 border-amber-200/60 hover:border-amber-400 hover:bg-amber-50/80 shadow-sm' 
-                          : 'bg-white border-slate-200 hover:border-[#067EB3]/40 hover:bg-slate-50/50 hover:shadow-sm'
+                      className={`group relative p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${
+                        isImportantLinks
+                          ? 'bg-amber-50/50 border-amber-200/70 hover:border-amber-400 hover:bg-amber-50 hover:shadow-[0_14px_30px_-14px_rgba(245,158,11,0.45)]'
+                          : 'bg-white border-slate-200/80 hover:border-[#067EB3]/50 hover:shadow-[0_16px_34px_-16px_rgba(6,126,179,0.45)]'
                       }`}
                     >
                       {/* Subtle micro neon indicator inside carrier logins */}
@@ -155,10 +165,10 @@ export default function ResourceGrid({ resources }: ResourceGridProps) {
                       <div className="flex gap-3.5 items-start">
                         
                         {/* Icon displayer */}
-                        <div className={`p-2.5 rounded-lg flex items-center justify-center shrink-0 ${
-                          isImportantLinks 
-                            ? 'bg-amber-100 text-amber-700' 
-                            : 'bg-[#067EB3]/10 text-[#067EB3] group-hover:bg-[#067EB3]/20 transition-all'
+                        <div className={`p-2.5 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+                          isImportantLinks
+                            ? 'bg-amber-100 text-amber-700 group-hover:bg-amber-500 group-hover:text-white'
+                            : 'bg-gradient-to-br from-[#067EB3]/15 to-[#7c3aed]/10 text-[#067EB3] group-hover:from-[#067EB3] group-hover:to-[#0a9fd6] group-hover:text-white group-hover:shadow-lg group-hover:shadow-[#067EB3]/30'
                         }`}>
                           <IconComponent name={item.iconName} />
                         </div>
