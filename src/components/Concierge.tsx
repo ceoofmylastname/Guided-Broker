@@ -124,8 +124,14 @@ function ConciergeInner({
     }
   }, [isConnecting, isConnected]);
 
-  // Pre-warm the search backend on load so the first query is fast.
-  useEffect(() => { warmSearch(); }, []);
+  // Pre-warm the search backend on load AND keep it warm every 90s, so voice
+  // queries never hit a cold start (which made Pete time out and say "can't pull
+  // it up" even though the result rendered).
+  useEffect(() => {
+    warmSearch();
+    const id = setInterval(warmSearch, 90000);
+    return () => clearInterval(id);
+  }, []);
 
   // Cycle through placeholders for text box
   useEffect(() => {
@@ -164,6 +170,7 @@ function ConciergeInner({
       endSession();
       return;
     }
+    warmSearch(); // warm the backend the moment they start a call
     try {
       // Ask for the mic up front so the browser prompt is tied to this click.
       await navigator.mediaDevices.getUserMedia({ audio: true });
