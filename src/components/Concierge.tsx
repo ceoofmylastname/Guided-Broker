@@ -273,7 +273,7 @@ function ConciergeInner({
             className="font-display text-5xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.04]"
           >
             Ask the GuidedBroker{" "}
-            <span className="gradient-concierge">Concierge</span>
+            <span className="gradient-concierge font-concierge text-[1.15em]">Concierge</span>
           </motion.h1>
 
           <motion.p
