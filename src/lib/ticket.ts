@@ -98,9 +98,11 @@ export async function submitTicket(input: TicketInput): Promise<{ ticketId: stri
     throw new Error(`Could not save ticket (${res.status}). ${detail}`);
   }
 
-  // 2) Fire the GoHighLevel webhook (best effort).
+  // 2) Fire the GoHighLevel webhook in the BACKGROUND (do not await), so the
+  // caller (esp. Pete's voice tool, which has a short timeout) returns the
+  // instant the ticket is saved. The ticket is already in the DB at this point.
   try {
-    await fetch(CONFIG.ticketWebhookUrl, {
+    fetch(CONFIG.ticketWebhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -115,7 +117,8 @@ export async function submitTicket(input: TicketInput): Promise<{ ticketId: stri
         submittedAt: new Date().toISOString(),
         source: "GuidedBroker Concierge",
       }),
-    });
+      keepalive: true,
+    }).catch((e) => console.warn("Webhook POST failed (ticket already saved):", e));
   } catch (e) {
     console.warn("Webhook POST failed (ticket already saved):", e);
   }
