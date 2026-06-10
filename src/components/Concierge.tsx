@@ -34,7 +34,7 @@ const SUGGESTIONS = [
   { text: "2026 commissions", label: "📄 Split Commissions" },
   { text: "Ambetter login", label: "🌟 Ambetter Portal" },
   { text: "Clearwater PPO", label: "🤝 Clearwater Appoints" },
-  { text: "Meeting Reservations", label: "📅 Room Bookings" }
+  { text: "Dental and vision directory", label: "🦷 Dental & Vision" }
 ];
 
 const AGENT_READY = !!CONFIG.elevenLabsAgentId && CONFIG.elevenLabsAgentId !== "YOUR_ELEVENLABS_AGENT_ID";
