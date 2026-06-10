@@ -106,11 +106,23 @@ function ConciergeInner({
 }: ConciergeProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const callRef = useRef<HTMLDivElement>(null);
 
   // Real ElevenLabs voice session state
   const { startSession, endSession, status, isSpeaking } = useConversation();
   const isConnected = status === 'connected';
   const isConnecting = status === 'connecting';
+
+  // As soon as a call is connecting/active, scroll the Pete visual into view
+  // (key on mobile, where the overlay otherwise opens below the fold).
+  useEffect(() => {
+    if (isConnecting || isConnected) {
+      const id = setTimeout(() => {
+        callRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 90);
+      return () => clearTimeout(id);
+    }
+  }, [isConnecting, isConnected]);
 
   // Pre-warm the search backend on load so the first query is fast.
   useEffect(() => { warmSearch(); }, []);
@@ -300,12 +312,13 @@ function ConciergeInner({
 
         {/* LIVE VOICE CALL OVERLAY — shown while a real conversation is active */}
         <AnimatePresence>
-          {isConnected && (
+          {(isConnecting || isConnected) && (
             <motion.div
+              ref={callRef}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-slate-200 rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] mb-12 relative overflow-hidden"
+              className="bg-white border border-slate-200 rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] mb-12 relative overflow-hidden scroll-mt-24"
             >
               <div className="flex flex-col items-center">
                 {/* ProtectHealth Pete avatar — transparent, fades into the white card */}
@@ -323,7 +336,7 @@ function ConciergeInner({
                 </div>
 
                 <h4 className="font-display font-bold text-slate-900 text-lg uppercase tracking-widest font-mono">
-                  {isSpeaking ? 'Pete is speaking' : 'Listening…'}
+                  {isConnecting ? 'Connecting to Pete…' : isSpeaking ? 'Pete is speaking' : 'Listening…'}
                 </h4>
 
                 {/* Live waveform */}
@@ -338,7 +351,7 @@ function ConciergeInner({
                 </div>
 
                 <p className="text-slate-600 font-mono text-sm max-w-md mx-auto">
-                  Ask out loud — "Where are my 2026 commissions?"
+                  {isConnecting ? 'One moment, connecting you to Pete…' : 'Ask out loud — "Where are my 2026 commissions?"'}
                 </p>
 
                 <button
