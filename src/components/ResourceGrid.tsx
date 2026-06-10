@@ -98,7 +98,7 @@ export default function ResourceGrid({ resources }: ResourceGridProps) {
             <span className="text-[11px] font-semibold text-slate-600 tracking-wider uppercase font-mono">Browse Manually</span>
           </div>
           <h2 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight">
-            <span className="text-slate-900">The </span><span className="gradient-concierge">Resource Library</span>
+            <span className="text-slate-900">The </span><span className="gradient-concierge font-concierge text-[1.15em]">Resource Library</span>
           </h2>
           <p className="text-slate-600 mt-4 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
             Every directory, compliance manual, commission table, and carrier login — organized and one tap away.
