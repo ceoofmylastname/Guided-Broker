@@ -11,7 +11,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "commissions",
     title: "Commissions Documents & Statements",
     category: "administrative",
-    url: "https://drive.google.com/drive/folders/placeholder-commissions",
+    url: "https://drive.google.com/drive/folders/1bvSwwOFlURS6L2SG6HIUsUI6kEFs7icw",
     description: "Access your 2026 commission statement history, payment schedules, direct deposit setup, and commission split details.",
     iconName: "FileText"
   },
@@ -19,7 +19,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "nvhl",
     title: "NVHL Portal Info (Nevada Health Link Access)",
     category: "administrative",
-    url: "https://drive.google.com/drive/folders/placeholder-nvhl",
+    url: "https://drive.google.com/drive/folders/10hIKCKr9SwCRAu29Dj-3oQtL0hr-tgGz",
     description: "Administrative setup, agent licensing attachments, and appointment credentials for NVHL Marketplace.",
     iconName: "Key"
   },
@@ -27,7 +27,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "ph-logo",
     title: "ProtectHealth Official Brand Assets & Logos",
     category: "administrative",
-    url: "https://drive.google.com/drive/folders/placeholder-brand-logos",
+    url: "https://drive.google.com/drive/folders/1a2fpW-DJCCAg7hUGtX5YgunNs4M6XZ2b",
     description: "Download official ProtectHealth high-resolution vector and raster logos, brand guidelines, and presentation templates of B&C Agency LLC.",
     iconName: "Award"
   },
@@ -37,7 +37,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "aca-item",
     title: "ACA Compliance & Sales Certification Guide",
     category: "support_training",
-    url: "https://drive.google.com/drive/folders/placeholder-aca-training",
+    url: "https://drive.google.com/drive/folders/1icKvAHlFXDfYwNzAvfa1OwGKAmtv6enW",
     description: "Training materials, compliance rules, client enrollment walkthroughs, and cert prep for Affordable Care Act plans.",
     iconName: "BookOpen"
   },
@@ -45,7 +45,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "life-item",
     title: "Life Insurance Sales Suite & Underwriting Guide",
     category: "support_training",
-    url: "https://drive.google.com/drive/folders/placeholder-life-training",
+    url: "https://drive.google.com/drive/folders/1ylyBg4XPBVFPDURUZ7eM6yDKPV-7fPWb",
     description: "Product brochures, medical underwriting requirements, sales decks, and quote calculation manuals for life insurance.",
     iconName: "ShieldAlert"
   },
@@ -53,7 +53,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "seg-item",
     title: "SEG Benefit Guidelines & Plan Configurations",
     category: "support_training",
-    url: "https://drive.google.com/drive/folders/placeholder-seg-benefits",
+    url: "https://drive.google.com/drive/folders/1ZqizzTUUY6XPaGISkktcZoTOH_ORn0L5",
     description: "State Employee Group (SEG) benefits schedules, eligibility limits, enrollment criteria, and presentation guides.",
     iconName: "FileSpreadsheet"
   },
@@ -61,7 +61,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "voluntary-item",
     title: "Voluntary & Ancillary Supplemental Training",
     category: "support_training",
-    url: "https://drive.google.com/drive/folders/placeholder-voluntary-ancill",
+    url: "https://drive.google.com/drive/folders/1caMDyuMgwAclybVaAC_JlbTFf5M_bv7q",
     description: "Ancillary product guides including dental, vision, and critical illness supplemental packages.",
     iconName: "Sparkles"
   },
@@ -71,7 +71,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "dir-aca",
     title: "ACA Directory & Provider Network Hotlines",
     category: "directory",
-    url: "https://drive.google.com/drive/folders/placeholder-aca-directories",
+    url: "https://drive.google.com/drive/folders/1TOcAso3o7JgOAa0ErP-IXFbiJzS-5bXV",
     description: "Quick finder for provider networks, customer services, enrollment offices, and carrier broker support helplines for ACA carriers.",
     iconName: "Users"
   },
@@ -79,7 +79,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "dir-dental-vision",
     title: "Dental & Vision Provider Networks Directory",
     category: "directory",
-    url: "https://drive.google.com/drive/folders/placeholder-dental-vision",
+    url: "https://drive.google.com/drive/folders/1n588LnRMElLVg_sTG9dcCcFYohLv4FPy",
     description: "Underwriting hotlines, network directories, and claims addresses for all dental and vision plans.",
     iconName: "Eye"
   },
@@ -87,7 +87,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "dir-life",
     title: "Life Insurance Partner Carrier Contact List",
     category: "directory",
-    url: "https://drive.google.com/drive/folders/placeholder-life-directory",
+    url: "https://drive.google.com/drive/folders/18KJhhOnQpQJtwxWNRvsnByHHi4wEG6DG",
     description: "Phone contacts, claims mailing addresses, and administrative contact numbers for our life insurance carriers.",
     iconName: "PhoneCall"
   },
@@ -95,7 +95,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "dir-off-exchange",
     title: "Off-Exchange Specialized Plan Directory",
     category: "directory",
-    url: "https://drive.google.com/drive/folders/placeholder-off-exchange",
+    url: "https://drive.google.com/drive/folders/1w49-L0W5csM504QqPvRVY0KWWOl6jcIC",
     description: "Details, enrollment support contacts, and direct phone lines for major off-exchange health plan options.",
     iconName: "Building"
   },
@@ -103,7 +103,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "dir-seg",
     title: "SEG Administrative Directory & Core Contacts",
     category: "directory",
-    url: "https://drive.google.com/drive/folders/placeholder-seg-contacts",
+    url: "https://drive.google.com/drive/folders/1UCpFH_gMzeTJvZsigBLlR7PHgbhbC4w8",
     description: "E-mail addresses, direct lines, and administrative contacts for Nevada State Employee Group administrators.",
     iconName: "Contact"
   },
@@ -111,7 +111,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     id: "dir-voluntary",
     title: "Voluntary & Ancillary Insurer Directory",
     category: "directory",
-    url: "https://drive.google.com/drive/folders/placeholder-voluntary-contacts",
+    url: "https://drive.google.com/drive/folders/1jOubwNir-YZw8aCCQM6sPUwyNNbePyrF",
     description: "Direct contact list, agent support lines, and billing departments for voluntary benefit products.",
     iconName: "ClipboardList"
   },
