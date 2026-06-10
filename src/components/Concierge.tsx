@@ -38,6 +38,19 @@ const SUGGESTIONS = [
 
 const AGENT_READY = !!CONFIG.elevenLabsAgentId && CONFIG.elevenLabsAgentId !== "YOUR_ELEVENLABS_AGENT_ID";
 
+// Warm the search backend so the first real query isn't a cold start (which can
+// take ~7s and trip the voice tool's timeout). Fire-and-forget; ignore result.
+function warmSearch() {
+  if (CONFIG.useMockSearch) return;
+  try {
+    fetch(`${CONFIG.apiBaseUrl}/api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "warmup", top_k: 1 }),
+    }).catch(() => {});
+  } catch (e) { /* noop */ }
+}
+
 // Wrap the concierge in the ElevenLabs ConversationProvider so the hero
 // "Tap to Speak" button can drive a real voice session.
 export default function Concierge(props: ConciergeProps) {
@@ -75,6 +88,7 @@ export default function Concierge(props: ConciergeProps) {
       agentId={AGENT_READY ? CONFIG.elevenLabsAgentId : undefined}
       connectionType="webrtc"
       clientTools={clientTools}
+      onConnect={() => warmSearch()}
       onError={(e) => console.error("ElevenLabs conversation error:", e)}
     >
       <ConciergeInner {...props} />
@@ -97,6 +111,9 @@ function ConciergeInner({
   const { startSession, endSession, status, isSpeaking } = useConversation();
   const isConnected = status === 'connected';
   const isConnecting = status === 'connecting';
+
+  // Pre-warm the search backend on load so the first query is fast.
+  useEffect(() => { warmSearch(); }, []);
 
   // Cycle through placeholders for text box
   useEffect(() => {
