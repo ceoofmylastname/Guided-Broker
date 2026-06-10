@@ -9,6 +9,7 @@ import { Search, Mic, Send, Sparkles, Folder, ArrowRight, CornerDownRight, Exter
 import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { CONFIG } from '../config';
 import { searchResources } from '../lib/search';
+import { submitTicket } from '../lib/ticket';
 import { SearchResponse } from '../types';
 
 interface ConciergeProps {
@@ -81,6 +82,50 @@ export default function Concierge(props: ConciergeProps) {
         return "The search failed, please try again.";
       } finally {
         setIsSearching(false);
+      }
+    },
+
+    // Pete files a support ticket on the broker's behalf — same destination as
+    // the manual form (Supabase tickets + GHL webhook), so it appears in the
+    // admin dashboard.
+    open_ticket: async (params: any) => {
+      const first = String(params?.first_name ?? params?.firstName ?? "").trim();
+      const last = String(params?.last_name ?? params?.lastName ?? "").trim();
+      const email = String(params?.email ?? "").trim();
+      const summary = String(params?.summary ?? params?.issue ?? params?.details ?? "").trim();
+      let department = String(params?.department ?? "Other").trim();
+      const match = CONFIG.ticketDepartments.find(
+        (d) => d.toLowerCase() === department.toLowerCase()
+      );
+      department = match || "Other";
+      const highPriority =
+        params?.high_priority === true ||
+        params?.highPriority === true ||
+        /\b(high|urgent|asap|emergency)\b/i.test(String(params?.priority ?? ""));
+
+      if (!first || !last || !email || !summary) {
+        return JSON.stringify({
+          submitted: false,
+          missing: [
+            !first && "first name", !last && "last name",
+            !email && "email", !summary && "a short summary of the issue",
+          ].filter(Boolean),
+          say: "Ask the broker for the missing details before submitting, then call open_ticket again.",
+        });
+      }
+
+      try {
+        const { ticketId } = await submitTicket({ department, firstName: first, lastName: last, email, summary, highPriority });
+        return JSON.stringify({
+          submitted: true,
+          ticket_id: ticketId,
+          say: `The ticket is submitted. The confirmation number is ${ticketId}. The ProtectHealth team will follow up by email.`,
+        });
+      } catch (e) {
+        return JSON.stringify({
+          submitted: false,
+          say: "I couldn't submit the ticket just now. Please try again, or use the Open a Ticket button on the page.",
+        });
       }
     },
   };
