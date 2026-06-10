@@ -66,14 +66,16 @@ export default function Concierge(props: ConciergeProps) {
       setQuery(q);
       setIsSearching(true);
       try {
-        const res = await searchResources(q, Number(params?.top_k) || 5);
+        const res = await searchResources(q, Number(params?.top_k) || 8);
         onSearchExecuted(res, q);
         const t = res.top_link;
         return JSON.stringify({
-          answer: res.answer,
+          document_content: (res as any).context || "",
           resource: t ? t.title : null,
           directions: t ? t.directions : null,
           link_shown_on_screen: !!t,
+          how_to_answer:
+            "Answer the broker's question directly and conversationally in 1-3 sentences using document_content. Then tell them the full document is on their screen — tap 'Open Resource Document'. If document_content doesn't contain the answer, say what you found and point them to the document. Never invent facts.",
         });
       } catch (e) {
         return "The search failed, please try again.";

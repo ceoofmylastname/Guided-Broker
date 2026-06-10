@@ -64,7 +64,8 @@ export async function onRequestPost({ request, env }) {
     const vector = await embedQuery(query, env.GEMINI_API_KEY);
     const pc = await queryPinecone(vector, top_k, env.PINECONE_INDEX_URL, env.PINECONE_API_KEY);
 
-    const matches = (pc.matches || []).map(m => ({
+    const raw = pc.matches || [];
+    const matches = raw.map(m => ({
       title: m.metadata?.title || m.metadata?.file_name || "Resource",
       url: m.metadata?.url || "#",
       category: m.metadata?.category || "Resource",
@@ -73,12 +74,22 @@ export async function onRequestPost({ request, env }) {
       score: m.score
     }));
 
+    // Actual document passages, so the agent can answer the question (RAG), not
+    // just name the file. Each stored chunk holds up to ~1500 chars of real text.
+    const context = raw
+      .map(m => (m.metadata?.text || "").trim())
+      .filter(Boolean)
+      .slice(0, 5)
+      .join("\n\n---\n\n")
+      .slice(0, 6000);
+
     const top = matches[0];
     const body = {
       top_link: top ? { title: top.title, url: top.url, category: top.category, directions: top.directions } : null,
       answer: top
         ? `${top.title}. ${top.directions || ""}`.trim()
         : "I couldn't find a matching resource. Try the carrier name, or open a support ticket.",
+      context,
       matches
     };
     return Response.json(body, { headers: cors });
