@@ -28,7 +28,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     title: "ProtectHealth Official Brand Assets & Logos",
     category: "administrative",
     url: "https://drive.google.com/drive/folders/1a2fpW-DJCCAg7hUGtX5YgunNs4M6XZ2b",
-    description: "Download official ProtectHealth high-resolution vector and raster logos, brand guidelines, and presentation templates of B&C Agency LLC.",
+    description: "Download official ProtectHealth high-resolution vector and raster logos, brand guidelines, and presentation templates of B&G Agency LLC.",
     iconName: "Award"
   },
 
@@ -185,7 +185,7 @@ export const RESOURCES_DATA: ResourceItem[] = [
     title: "Meeting Room Reservations",
     category: "important_links",
     url: "https://meet.google.com/",
-    description: "Schedule agent conferences, broker trainings, group pitches, and book physical boardrooms at B&C Agency. Note: This directs to scheduling portal.",
+    description: "Schedule agent conferences, broker trainings, group pitches, and book physical boardrooms at B&G Agency. Note: This directs to scheduling portal.",
     iconName: "Calendar",
     isExternal: true
   },

@@ -4,8 +4,17 @@
  *
  * Shared ticket submission. Used by BOTH the manual ticket form and Pete's
  * voice `open_ticket` tool, so a voice-created ticket is identical to a
- * hand-filled one. It (1) inserts a row into the Supabase `tickets` table that
- * the admin dashboard reads, and (2) POSTs to the GoHighLevel webhook.
+ * hand-filled one.
+ *
+ * It inserts one row into the Supabase `tickets` table. That insert IS the
+ * whole pipeline: triggers on the table assign the department leader, stamp
+ * the stage, apply the support tags, and dispatch both the leader
+ * notification and the submitter confirmation.
+ *
+ * The GoHighLevel webhook that used to fire alongside this was removed. The
+ * native rebuild (Aug 14 2026) replaced GHL workflows 000-006, so firing both
+ * meant every submitter got two confirmations and every leader got two
+ * notifications for a single ticket.
  */
 import { CONFIG } from "../config";
 
@@ -60,7 +69,7 @@ async function uploadFile(ticketId: string, file: File): Promise<string | null> 
 /**
  * Submit a ticket. Returns the generated ticket ID on success.
  * Throws only if the Supabase insert fails (so the UI/agent can report it);
- * webhook/file failures are logged but do not roll back the ticket.
+ * a failed file upload is logged but does not roll back the ticket.
  */
 export async function submitTicket(input: TicketInput): Promise<{ ticketId: string }> {
   const ticketId = generateTicketId();
@@ -70,7 +79,8 @@ export async function submitTicket(input: TicketInput): Promise<{ ticketId: stri
     fileName = await uploadFile(ticketId, input.file);
   }
 
-  // 1) Insert into Supabase tickets (this is what the admin dashboard shows).
+  // Insert into Supabase tickets. Triggers on this table handle routing,
+  // tagging, and every email — there is no second step.
   const row = {
     ticket_id: ticketId,
     department: input.department,
@@ -96,31 +106,6 @@ export async function submitTicket(input: TicketInput): Promise<{ ticketId: stri
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new Error(`Could not save ticket (${res.status}). ${detail}`);
-  }
-
-  // 2) Fire the GoHighLevel webhook in the BACKGROUND (do not await), so the
-  // caller (esp. Pete's voice tool, which has a short timeout) returns the
-  // instant the ticket is saved. The ticket is already in the DB at this point.
-  try {
-    fetch(CONFIG.ticketWebhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ticketId,
-        department: input.department,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        email: input.email,
-        summary: input.summary,
-        highPriority: !!input.highPriority,
-        file: input.file ? input.file.name : null,
-        submittedAt: new Date().toISOString(),
-        source: "GuidedBroker Concierge",
-      }),
-      keepalive: true,
-    }).catch((e) => console.warn("Webhook POST failed (ticket already saved):", e));
-  } catch (e) {
-    console.warn("Webhook POST failed (ticket already saved):", e);
   }
 
   return { ticketId };

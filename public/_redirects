@@ -1,2 +1,4 @@
+# /admin forwards to the real ticket board on protecthealth.com. Kept as a
+# 200 rewrite so main.tsx can issue the redirect and old bookmarks still land.
 /admin    /index.html   200
 /admin/*  /index.html   200

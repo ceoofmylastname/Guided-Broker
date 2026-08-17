@@ -10,6 +10,7 @@ import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { CONFIG } from '../config';
 import { searchResources } from '../lib/search';
 import { submitTicket } from '../lib/ticket';
+import { Identity, logQuery } from '../lib/identity';
 import { SearchResponse } from '../types';
 
 interface ConciergeProps {
@@ -19,6 +20,34 @@ interface ConciergeProps {
   setQuery: (q: string) => void;
   isSearching: boolean;
   setIsSearching: (b: boolean) => void;
+  /** Verified broker. App never renders this component without one. */
+  identity: Identity;
+}
+
+/**
+ * Record one question against the broker's session. Both front doors funnel
+ * through here, so a spoken query and a typed query are logged identically.
+ * Build audit item 15.
+ */
+function record(
+  identity: Identity,
+  queryText: string,
+  channel: 'text' | 'voice',
+  res: SearchResponse | null,
+) {
+  logQuery(identity.token, {
+    query: queryText,
+    channel,
+    top: res?.top_link
+      ? {
+          title: res.top_link.title,
+          url: res.top_link.url,
+          score: res.matches?.[0]?.score,
+        }
+      : null,
+    matchCount: res?.matches?.length ?? 0,
+    answered: !!res?.top_link,
+  });
 }
 
 const PLACEHOLDERS = [
@@ -55,7 +84,7 @@ function warmSearch() {
 // Wrap the concierge in the ElevenLabs ConversationProvider so the hero
 // "Tap to Speak" button can drive a real voice session.
 export default function Concierge(props: ConciergeProps) {
-  const { onSearchExecuted, setQuery, setIsSearching } = props;
+  const { onSearchExecuted, setQuery, setIsSearching, identity } = props;
 
   // Client tool the ElevenLabs voice agent calls. It runs the real search in
   // the browser, renders the result card with the clickable link on screen,
@@ -69,6 +98,7 @@ export default function Concierge(props: ConciergeProps) {
       try {
         const res = await searchResources(q, Number(params?.top_k) || 8);
         onSearchExecuted(res, q);
+        record(identity, q, 'voice', res);
         const t = res.top_link;
         return JSON.stringify({
           document_content: (res as any).context || "",
@@ -79,6 +109,7 @@ export default function Concierge(props: ConciergeProps) {
             "Answer the broker's question directly and conversationally in 1-3 sentences using document_content. Then tell them the full document is on their screen — tap 'Open Resource Document'. If document_content doesn't contain the answer, say what you found and point them to the document. Never invent facts.",
         });
       } catch (e) {
+        record(identity, q, 'voice', null);
         return "The search failed, please try again.";
       } finally {
         setIsSearching(false);
@@ -86,8 +117,8 @@ export default function Concierge(props: ConciergeProps) {
     },
 
     // Pete files a support ticket on the broker's behalf — same destination as
-    // the manual form (Supabase tickets + GHL webhook), so it appears in the
-    // admin dashboard.
+    // the manual form (the Supabase `tickets` table), so it lands on the admin
+    // board with routing, tags, and emails already handled by the triggers.
     open_ticket: async (params: any) => {
       const first = String(params?.first_name ?? params?.firstName ?? "").trim();
       const last = String(params?.last_name ?? params?.lastName ?? "").trim();
@@ -149,7 +180,8 @@ function ConciergeInner({
   query,
   setQuery,
   isSearching,
-  setIsSearching
+  setIsSearching,
+  identity
 }: ConciergeProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -198,8 +230,10 @@ function ConciergeInner({
     try {
       const searchRes = await searchResources(queryToSend);
       onSearchExecuted(searchRes, queryToSend);
+      record(identity, queryToSend, 'text', searchRes);
     } catch (err) {
       console.error("Search failure: ", err);
+      record(identity, queryToSend, 'text', null);
     } finally {
       setIsSearching(false);
     }

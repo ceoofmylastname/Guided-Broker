@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  ArrowRight, Shield, Sparkles, AlertCircle, FileText, 
-  HelpCircle, ChevronRight, CornerDownRight, CheckCircle2 
+import {
+  ArrowRight, Shield, Sparkles, AlertCircle, FileText,
+  HelpCircle, ChevronRight, CornerDownRight, CheckCircle2, Loader2
 } from 'lucide-react';
 
 import Header from './components/Header';
@@ -15,9 +15,13 @@ import Footer from './components/Footer';
 import Concierge from './components/Concierge';
 import ResourceGrid from './components/ResourceGrid';
 import TicketForm from './components/TicketForm';
+import Gate from './components/Gate';
 
 import { RESOURCES_DATA } from './data/resources';
 import { SearchResponse } from './types';
+import {
+  Identity, loadStoredIdentity, redeemHandoffFromUrl, revalidate,
+} from './lib/identity';
 
 export default function App() {
   // Global States
@@ -25,6 +29,40 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
+
+  // Identity gate. `checking` covers the first paint, so the directory never
+  // flashes on screen before we know who this is.
+  const [identity, setIdentity] = useState<Identity | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      // A CRM handoff token in the URL wins — it means a signed-in broker
+      // clicked through from the dashboard and should never see the form.
+      const fromCrm = await redeemHandoffFromUrl();
+      if (cancelled) return;
+      if (fromCrm) {
+        setIdentity(fromCrm);
+        setChecking(false);
+        return;
+      }
+
+      const stored = loadStoredIdentity();
+      if (!stored) {
+        setChecking(false);
+        return;
+      }
+
+      const still = await revalidate(stored.token);
+      if (cancelled) return;
+      setIdentity(still);
+      setChecking(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
 
   // When search executes, we update global query state and results
   const handleSearchExecuted = (result: SearchResponse, queryText: string) => {
@@ -69,9 +107,32 @@ export default function App() {
     }
   };
 
+  // First paint while we resolve identity. Deliberately shows nothing but a
+  // spinner — no resource titles, no carrier names.
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 size={22} className="animate-spin text-[#067EB3]" />
+        <span className="sr-only">Checking your access</span>
+      </div>
+    );
+  }
+
+  if (!identity) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Gate
+          onVerified={setIdentity}
+          onOpenTicket={() => setIsTicketOpen(true)}
+        />
+        <TicketForm isOpen={isTicketOpen} onClose={() => setIsTicketOpen(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-700 font-sans relative overflow-x-hidden selection:bg-primary/20 selection:text-primary">
-      
+
       {/* 1. LAYERED BACKGROUND MESH ORBS */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-20">
         {/* Top-left Indigo Orb replaced with Primary Color Blob */}
@@ -93,13 +154,14 @@ export default function App() {
       <main className="pt-24 pb-8 relative z-10">
 
         {/* 3. HERO / CONCIERGE CHAT INTERFACE AREA */}
-        <Concierge 
+        <Concierge
           onSearchExecuted={handleSearchExecuted}
           result={searchResult}
           query={query}
           setQuery={setQuery}
           isSearching={isSearching}
           setIsSearching={setIsSearching}
+          identity={identity}
         />
 
         {/* 4. STATIC CATEGORIZED GRID DIRECTORY GRID AREA */}

@@ -1,15 +1,21 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
-import Admin from './components/Admin.tsx';
+import {CONFIG} from './config';
 import './index.css';
 
-// Lightweight routing: /admin renders the admin dashboard, everything else the site.
+// `/admin` used to render a second, simpler ticket list built into this app.
+// It read the same `tickets` table as the real board but knew nothing about
+// stages, leaders, tags, the timeline, or compose — two doors onto one table,
+// one of them permanently drifting. It now forwards to the real board.
 const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
-const isAdmin = path.endsWith('/admin');
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    {isAdmin ? <Admin /> : <App />}
-  </StrictMode>,
-);
+if (path.endsWith('/admin')) {
+  window.location.replace(CONFIG.adminBoardUrl);
+} else {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

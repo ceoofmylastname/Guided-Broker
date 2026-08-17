@@ -80,7 +80,7 @@ export default function Header({ onOpenTicket, onScrollToSearch }: HeaderProps) 
               </div>
             </div>
             <span className="text-[9px] text-slate-500 tracking-widest font-mono uppercase mt-0.5 ml-1">
-              A Company of B&C Agency LLC
+              A Company of B&G Agency LLC
             </span>
           </div>
 

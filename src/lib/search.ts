@@ -148,7 +148,7 @@ export async function searchResources(query: string, topK: number = 5): Promise<
       directionText = "Go to the 'Administrative' column and select 'NVHL Portal Info'.";
       break;
     case "ph-logo":
-      synthesizedAnswer = "ProtectHealth's vector files, master logos, and B&C brand guidelines are ready for download in our shared vector folders.";
+      synthesizedAnswer = "ProtectHealth's vector files, master logos, and B&G brand guidelines are ready for download in our shared vector folders.";
       directionText = "Open the 'ProtectHealth Official Brand Assets' under Administrative.";
       break;
     case "aca-item":

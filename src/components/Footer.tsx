@@ -50,7 +50,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-xs text-slate-500 mt-2 font-mono uppercase tracking-widest leading-none">
-              A Company of B&C Agency LLC
+              A Company of B&G Agency LLC
             </p>
           </div>
 
@@ -90,7 +90,7 @@ export default function Footer() {
               &copy; {currentYear} ProtectHealth. All rights reserved.
             </p>
             <p className="text-[10px] text-slate-500 mt-1">
-              Broker Support Center by B&C Agency.
+              Broker Support Center by B&G Agency.
             </p>
           </div>
           

@@ -1,0 +1,5 @@
+# The GuidedBroker Resource Center is an internal broker tool. The whole host
+# is non-public, so a blanket disallow leaks nothing — unlike disallowing a
+# single path, which would advertise it.
+User-agent: *
+Disallow: /
