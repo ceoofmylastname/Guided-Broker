@@ -10,7 +10,7 @@ import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { CONFIG } from '../config';
 import { searchResources } from '../lib/search';
 import { submitTicket } from '../lib/ticket';
-import { Identity, logQuery } from '../lib/identity';
+import { Identity, logQuery, splitName } from '../lib/identity';
 import { SearchResponse } from '../types';
 
 interface ConciergeProps {
@@ -120,9 +120,13 @@ export default function Concierge(props: ConciergeProps) {
     // the manual form (the Supabase `tickets` table), so it lands on the admin
     // board with routing, tags, and emails already handled by the triggers.
     open_ticket: async (params: any) => {
-      const first = String(params?.first_name ?? params?.firstName ?? "").trim();
-      const last = String(params?.last_name ?? params?.lastName ?? "").trim();
-      const email = String(params?.email ?? "").trim();
+      // The broker cleared the gate, so we already know exactly who this is.
+      // Anything Pete does not supply falls back to the verified session
+      // rather than being asked for out loud.
+      const me = splitName(identity?.name || "");
+      const first = String(params?.first_name ?? params?.firstName ?? "").trim() || me.first;
+      const last = String(params?.last_name ?? params?.lastName ?? "").trim() || me.last;
+      const email = String(params?.email ?? "").trim() || (identity?.email || "");
       const summary = String(params?.summary ?? params?.issue ?? params?.details ?? "").trim();
       let department = String(params?.department ?? "Other").trim();
       const match = CONFIG.ticketDepartments.find(
@@ -138,10 +142,10 @@ export default function Concierge(props: ConciergeProps) {
         return JSON.stringify({
           submitted: false,
           missing: [
-            !first && "first name", !last && "last name",
-            !email && "email", !summary && "a short summary of the issue",
+            !summary && "a short summary of the issue",
+            !first && "first name", !last && "last name", !email && "email",
           ].filter(Boolean),
-          say: "Ask the broker for the missing details before submitting, then call open_ticket again.",
+          say: "Ask only for what is listed in `missing`. Name and email are already known from their sign-in — never ask for those.",
         });
       }
 

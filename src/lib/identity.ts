@@ -21,6 +21,17 @@ export interface Identity {
   token: string;
   agentId: string;
   name: string;
+  /** Roster email. Used to prefill the ticket form so a verified broker is
+   *  never asked who they are. */
+  email: string;
+}
+
+/** Split a roster full name into first / last for the ticket form. */
+export function splitName(full: string): { first: string; last: string } {
+  const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return { first: '', last: '' };
+  if (parts.length === 1) return { first: parts[0], last: '' };
+  return { first: parts[0], last: parts.slice(1).join(' ') };
 }
 
 /**
@@ -95,6 +106,7 @@ export async function identify(name: string, email: string): Promise<IdentifyRes
       token: data.token,
       agentId: data.agent?.id ?? "",
       name: data.agent?.name ?? name,
+      email: data.agent?.email ?? email,
     };
     store(identity);
     return { ok: true, identity };
@@ -112,7 +124,12 @@ export async function revalidate(token: string): Promise<Identity | null> {
     clearIdentity();
     return null;
   }
-  return { token, agentId: data.agent?.id ?? "", name: data.agent?.name ?? "" };
+  return {
+    token,
+    agentId: data.agent?.id ?? "",
+    name: data.agent?.name ?? "",
+    email: data.agent?.email ?? data.email ?? "",
+  };
 }
 
 /**
@@ -136,6 +153,7 @@ export async function redeemHandoffFromUrl(): Promise<Identity | null> {
     token: data.token,
     agentId: data.agent?.id ?? "",
     name: data.agent?.name ?? "",
+    email: data.agent?.email ?? "",
   };
   store(identity);
   return identity;

@@ -125,7 +125,7 @@ export default function App() {
           onVerified={setIdentity}
           onOpenTicket={() => setIsTicketOpen(true)}
         />
-        <TicketForm isOpen={isTicketOpen} onClose={() => setIsTicketOpen(false)} />
+        <TicketForm isOpen={isTicketOpen} onClose={() => setIsTicketOpen(false)} identity={identity} />
       </div>
     );
   }
@@ -208,9 +208,10 @@ export default function App() {
       </main>
 
       {/* 6. SUPPORT TICKET SYSTEM DIALOG */}
-      <TicketForm 
-        isOpen={isTicketOpen} 
-        onClose={() => setIsTicketOpen(false)} 
+      <TicketForm
+        isOpen={isTicketOpen}
+        onClose={() => setIsTicketOpen(false)}
+        identity={identity}
       />
 
       {/* 7. FOOTER */}

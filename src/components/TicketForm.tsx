@@ -3,25 +3,42 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, User, Send, CheckCircle2, Loader2, AlertCircle, Building2, Paperclip, AlertTriangle } from 'lucide-react';
 import { CONFIG } from '../config';
 import { submitTicket, isValidEmail } from '../lib/ticket';
+import { Identity, splitName } from '../lib/identity';
 
 interface TicketFormProps {
   isOpen: boolean;
   onClose: () => void;
+  /** The verified broker, when there is one. Absent on the gate screen, where
+   *  the form is the escape hatch for someone not yet on the roster. */
+  identity?: Identity | null;
 }
 
-export default function TicketForm({ isOpen, onClose }: TicketFormProps) {
+export default function TicketForm({ isOpen, onClose, identity }: TicketFormProps) {
+  const known = splitName(identity?.name || '');
+
   const [department, setDepartment] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState(known.first);
+  const [lastName, setLastName] = useState(known.last);
+  const [email, setEmail] = useState(identity?.email || '');
   const [summary, setSummary] = useState('');
   const [highPriority, setHighPriority] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+
+  // Identity resolves asynchronously (gate submit, or the CRM handoff on load),
+  // so it can arrive after this component has already mounted with empty state.
+  // Only fill blanks — never clobber something the broker has typed.
+  useEffect(() => {
+    if (!identity) return;
+    const n = splitName(identity.name || '');
+    setFirstName((v) => v || n.first);
+    setLastName((v) => v || n.last);
+    setEmail((v) => v || identity.email || '');
+  }, [identity?.agentId, identity?.name, identity?.email]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -51,8 +68,11 @@ export default function TicketForm({ isOpen, onClose }: TicketFormProps) {
     }
   };
 
+  // "File another" keeps who you are and clears only what the ticket is about.
   const handleReset = () => {
-    setDepartment(''); setFirstName(''); setLastName(''); setEmail('');
+    const n = splitName(identity?.name || '');
+    setDepartment('');
+    setFirstName(n.first); setLastName(n.last); setEmail(identity?.email || '');
     setSummary(''); setHighPriority(false); setFile(null);
     setIsSuccess(false); setError('');
   };
