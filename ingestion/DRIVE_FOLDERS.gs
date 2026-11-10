@@ -9,7 +9,7 @@
  *  4. Drop it into the repo at: ingestion/resource_center_folders.csv
  */
 function exportFolderManifest() {
-  var ROOT_ID = '12d2zXtY_ii5ao8zhCd4hqMjW_aPjnM_W'; // Resource Center
+  var ROOT_ID = '1OGSRZXtjxVdGrihzuFBLDM8EXNhAKp-n'; // Resource Center
   var rows = [['path', 'folderId', 'url']];
   var root = DriveApp.getFolderById(ROOT_ID);
   rows.push(['Resource Center', root.getId(), root.getUrl()]);
@@ -23,10 +23,13 @@ function exportFolderManifest() {
   Logger.log('Download this CSV from your Drive: ' + file.getUrl());
 }
 
+var SKIP_IDS = { '10hp_qiRx90q3VudMPEF9EzwDKZ2shkxl': true }; // '- Corporate' — agents must never see this
+
 function walkF_(folder, path, rows) {
   var subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
+    if (SKIP_IDS[sf.getId()]) continue;
     try { sf.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
     var p = path + '/' + sf.getName();
     rows.push([p, sf.getId(), sf.getUrl()]);

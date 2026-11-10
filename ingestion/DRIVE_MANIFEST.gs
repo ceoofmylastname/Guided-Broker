@@ -16,13 +16,15 @@
  */
 
 function exportResourceCenterManifest() {
-  var ROOT_ID = '12d2zXtY_ii5ao8zhCd4hqMjW_aPjnM_W'; // Resource Center master folder
+  var ROOT_ID = '1OGSRZXtjxVdGrihzuFBLDM8EXNhAKp-n'; // Resource Center master folder
   var rows = [['path', 'name', 'fileId', 'mimeType', 'shareUrl']];
   var root = DriveApp.getFolderById(ROOT_ID);
 
   // Make sure the whole tree is "anyone with the link" so the bot's links open
   // and the ingest script can read each file.
-  try { root.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  // Do NOT share the root itself: link-sharing a folder cascades to every
+  // child, which would expose '- Corporate'. Each non-skipped item is shared
+  // individually in the walk instead.
 
   walk_(root, 'Resource Center', rows);
 
@@ -35,6 +37,8 @@ function exportResourceCenterManifest() {
   Logger.log('Download this CSV from your Drive: ' + file.getUrl());
 }
 
+var SKIP_IDS = { '10hp_qiRx90q3VudMPEF9EzwDKZ2shkxl': true }; // '- Corporate' — agents must never see this
+
 function walk_(folder, path, rows) {
   var files = folder.getFiles();
   while (files.hasNext()) {
@@ -45,6 +49,7 @@ function walk_(folder, path, rows) {
   var subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
+    if (SKIP_IDS[sf.getId()]) continue;
     walk_(sf, path + '/' + sf.getName(), rows);
   }
 }
