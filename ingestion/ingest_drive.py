@@ -13,7 +13,7 @@ Run:  python ingestion/ingest_drive.py
 Env (from .env): GEMINI_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_URL
 Optional deps for Office files:  pip3 install python-docx openpyxl
 """
-import os, csv, io, sys, time, hashlib, urllib.request
+import os, csv, io, sys, time, hashlib, urllib.request, urllib.error
 import numpy as np
 from pinecone import Pinecone
 from google import genai
@@ -36,7 +36,7 @@ PINECONE_INDEX_URL = os.environ["PINECONE_INDEX_URL"]
 MANIFEST = os.path.join(os.path.dirname(__file__), "resource_center_manifest.csv")
 DIM = 768
 
-gem = genai.Client(api_key=GEMINI_API_KEY)
+gem = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(api_version="v1beta"))  # model lives on v1beta, same as the live site
 index = Pinecone(api_key=PINECONE_API_KEY).Index(host=PINECONE_INDEX_URL)
 
 
@@ -56,10 +56,24 @@ def embed(texts, task, batch=20):
         chunk_texts = texts[i:i + batch]
         for attempt in range(10):
             try:
-                r = gem.models.embed_content(
-                    model="gemini-embedding-2-preview", contents=chunk_texts,
-                    config=types.EmbedContentConfig(task_type=task, output_dimensionality=DIM))
-                out.extend(normalize(e.values) for e in r.embeddings)
+                # batchEmbedContents = one vector per text. (embed_content with a list
+                # merges the whole batch into ONE vector on gemini-embedding-2.)
+                import json as _json
+                body = {"requests": [{"model": "models/gemini-embedding-2-preview",
+                                      "content": {"parts": [{"text": t}]},
+                                      "taskType": task, "outputDimensionality": DIM}
+                                     for t in chunk_texts]}
+                req = urllib.request.Request(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2-preview:batchEmbedContents?key=" + GEMINI_API_KEY,
+                    data=_json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+                try:
+                    resp = _json.loads(urllib.request.urlopen(req, timeout=120).read())
+                except urllib.error.HTTPError as he:
+                    raise RuntimeError("%s %s" % (he.code, he.read().decode("utf-8", "ignore")[:500]))
+                embs = resp["embeddings"]
+                if len(embs) != len(chunk_texts):
+                    raise RuntimeError("expected %d embeddings, got %d" % (len(chunk_texts), len(embs)))
+                out.extend(normalize(e["values"]) for e in embs)
                 break
             except Exception as ex:
                 msg = str(ex)
@@ -141,8 +155,22 @@ def main():
         print("Missing %s. Run DRIVE_MANIFEST.gs first and drop the CSV here." % MANIFEST)
         sys.exit(1)
 
+    # Preflight: fail in seconds, not after 15 minutes of embedding.
+    try:
+        stats = index.describe_index_stats()
+        print("Pinecone OK. Current vectors: %s" % stats.get("total_vector_count", "?"))
+        _t = embed(["preflight one", "preflight two"], "RETRIEVAL_DOCUMENT")
+        assert len(_t) == 2 and len(_t[0]) == DIM, "embedding shape wrong"
+        print("Gemini OK.")
+    except Exception as e:
+        print("PREFLIGHT FAILED (nothing changed):", e); sys.exit(1)
+
     rows = list(csv.DictReader(open(MANIFEST, encoding="utf-8")))
-    print("Manifest files: %d" % len(rows))
+    # Old plan-year material (incl. retired carriers like Silver Peak) stays out of Pete.
+    EXCLUDE_TOP = {"ARCHIVES"}
+    before = len(rows)
+    rows = [r for r in rows if (r.get("path", "").split("/") + ["", ""])[1].strip() not in EXCLUDE_TOP]
+    print("Manifest files: %d (skipped %d archived)" % (len(rows), before - len(rows)))
 
     items = []  # (kind, text, title, url, section, directions, file_name)
     for row in rows:
@@ -165,6 +193,9 @@ def main():
 
     print("Embedding %d vectors (this is the slow part on the free tier)..." % len(items))
     embs = embed([it[1] for it in items], "RETRIEVAL_DOCUMENT")
+
+    if len(embs) != len(items):
+        print("ABORT: %d texts but %d embeddings. Index NOT touched." % (len(items), len(embs))); sys.exit(1)
 
     payload = []
     for i, ((kind, txt, title, url, section, directions, fname), e) in enumerate(zip(items, embs)):
